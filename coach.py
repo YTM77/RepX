@@ -1,18 +1,14 @@
 # coach.py
-# The parts of the AI coach that don't need the language model:
-#   - progression: what weight / hold time to do next session
-#   - readiness: how hard to train today from smartwatch data
-#   - tools: the only actions the chat AI is allowed to take on the plan.
-#     We check every request, so the AI can't add an exercise that doesn't exist
-#     or one that is bad for the athlete's injury.
+# The coach logic that doesn't need the language model: progression, readiness from
+# smartwatch data, and the tools the chat AI is allowed to use (every request is checked).
 
 import statistics
 
 from planner import EXERCISES, can_do, find_alternatives
 
 
+# ---------- Progression ----------
 def next_weight(weight, reps_done, rep_range, form_score, upper_body=False):
-    """Double progression: hit the top of the rep range with good form -> add weight."""
     low, high = rep_range
     if form_score < 70:
         return round(weight * 0.95, 1), "Form slipped, lower the weight a bit"
@@ -30,8 +26,8 @@ def next_hold(seconds, hold_score):
     return seconds
 
 
+# ---------- Readiness ----------
 def readiness(hrv_today, hrv_history, rhr_today, rhr_history, sleep_hours, sleep_goal=8):
-    """0-100 score compared with the athlete's own normal (last 7-30 days)."""
     hrv_z = (hrv_today - statistics.mean(hrv_history)) / (statistics.stdev(hrv_history) or 1)
     rhr_z = (rhr_today - statistics.mean(rhr_history)) / (statistics.stdev(rhr_history) or 1)
     sleep = max(-0.5, min(0.25, sleep_hours / sleep_goal - 1)) * 4
@@ -46,8 +42,7 @@ def readiness(hrv_today, hrv_history, rhr_today, rhr_history, sleep_hours, sleep
     return round(value), advice
 
 
-# ---------------- tools for the chat AI ----------------
-
+# ---------- Tools for the chat AI ----------
 TOOLS = [
     {"name": "replace_exercise", "description": "Swap one exercise in today's session for another",
      "parameters": {"old": "string", "new": "string"}},
@@ -59,7 +54,6 @@ TOOLS = [
 
 
 def use_tool(name, args, session, athlete):
-    """session is a list of exercise names. Returns (ok, message, session)."""
     names = [e[0].lower() for e in EXERCISES]
 
     if name == "replace_exercise":
@@ -78,7 +72,7 @@ def use_tool(name, args, session, athlete):
         minutes = args.get("minutes", 0)
         if minutes < 10:
             return False, "A session needs at least 10 minutes", session
-        keep = max(1, minutes // 8)  # about 8 minutes per exercise
+        keep = max(1, minutes // 8)
         return True, "Session shortened to " + str(minutes) + " minutes", session[:keep]
 
     if name == "find_alternatives":

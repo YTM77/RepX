@@ -1,10 +1,6 @@
 # exercise_detector.py
-# Figures out which exercise you are doing from 1.6 seconds of joint angles.
-#
-# For each angle in the window we take: average, spread, min, max, range and speed.
-# A Random Forest learns which numbers belong to which exercise.
-# To avoid jumping between guesses, an exercise is only "locked" after
-# 3 guesses in a row agree with at least 70% confidence.
+# Recognises the exercise from 1.6 seconds of joint angles with a Random Forest.
+# An exercise is only locked after 3 confident guesses in a row agree.
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -12,12 +8,13 @@ from sklearn.ensemble import RandomForestClassifier
 from angles import ANGLE_NAMES, Smoother, get_angles
 from fake_athlete import EXERCISES, FakeAthlete
 
-WINDOW = 48   # frames (1.6 s at 30 fps)
-STEP = 8      # make a new guess every 8 frames
+# ---------- Settings ----------
+WINDOW = 48
+STEP = 8
 
 
+# ---------- Features ----------
 def window_features(window):
-    """window is a list of angle dicts. Returns one row of numbers."""
     row = []
     for name in ANGLE_NAMES:
         values = np.array([frame[name] for frame in window])
@@ -26,6 +23,7 @@ def window_features(window):
     return row
 
 
+# ---------- Training data and model ----------
 def angles_from_athlete(athlete, seconds):
     smoother = Smoother()
     return [smoother.smooth(get_angles(points)) for points in athlete.frames(seconds)]
@@ -49,13 +47,14 @@ def train_model(seeds=range(20)):
     return model
 
 
+# ---------- Live detector ----------
 class ExerciseDetector:
     def __init__(self, model):
         self.model = model
         self.window = []
         self.frame_count = 0
         self.last_guesses = []
-        self.exercise = None  # the locked exercise
+        self.exercise = None
 
     def update(self, angles):
         self.window.append(angles)

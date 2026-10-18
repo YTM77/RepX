@@ -1,8 +1,8 @@
 # form_checker.py
-# Checks the form of each rep with simple rules and gives one tip.
-# Form score = 100 minus a penalty for every rule that was broken.
+# Checks the form of every rep with simple rules, gives a form score (100 minus penalties)
+# and one tip like "Go lower".
 
-
+# ---------- Squat form ----------
 class SquatChecker:
     def __init__(self):
         self.reset()
@@ -16,7 +16,6 @@ class SquatChecker:
         self.most_lean = max(self.most_lean, angles["trunk_lean"])
 
     def finish_rep(self):
-        """Call when a rep ends. Returns (score, tip, problems)."""
         problems = []
         score = 100
         if self.lowest_knee > 100:
@@ -36,6 +35,7 @@ class SquatChecker:
         return score, tip, problems
 
 
+# ---------- Push-up form ----------
 class PushUpChecker:
     def __init__(self):
         self.reset()
@@ -68,4 +68,5 @@ class PushUpChecker:
         return score, tip, problems
 
 
+# ---------- Checker for each exercise ----------
 CHECKERS = {"squat": SquatChecker, "push_up": PushUpChecker}

@@ -1,10 +1,8 @@
 # rep_counter.py
-# Counts reps from one joint angle (the knee for squats, the elbow for push-ups).
-#
-#   standing (angle > top) -> going down (angle < start) -> below the depth line -> back up = 1 rep
-#   if you come back up before reaching the depth line it is a "half rep" (not counted)
+# Counts reps from one joint angle. Going down past the depth line and back up is one rep;
+# coming back up before the depth line is a half rep (not counted).
 
-
+# ---------- Rep counter ----------
 class RepCounter:
     def __init__(self, top=160, depth=100, start=150):
         self.top = top
@@ -16,7 +14,6 @@ class RepCounter:
         self.half_reps = 0
 
     def update(self, angle):
-        """Give it the angle for every frame. Returns "rep", "half" or None."""
         if self.state == "up":
             if angle < self.start:
                 self.state = "down"
@@ -33,7 +30,7 @@ class RepCounter:
         return None
 
 
-# which angle to use and the thresholds for each exercise
+# ---------- Settings for each exercise ----------
 REP_SETTINGS = {
     "squat": {"angle": "knee", "top": 160, "depth": 100, "start": 150},
     "push_up": {"angle": "elbow", "top": 155, "depth": 100, "start": 145},

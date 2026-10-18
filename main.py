@@ -1,11 +1,6 @@
 # main.py
-# RepX live coach: open the webcam (or a video), find your body with MediaPipe,
-# figure out the exercise, count reps, time holds and tell you how to fix your form.
-#
-#   python main.py                        -> webcam, exercise detected automatically
-#   python main.py --video squats.mp4     -> use a video file instead
-#   python main.py --exercise wall_sit    -> skip detection
-#   python main.py --demo squat           -> no camera: a fake athlete on screen
+# RepX live coach: webcam or video -> MediaPipe body points -> exercise detection -> reps,
+# holds and form tips on screen. Use --demo to run with a fake athlete and no camera.
 
 import argparse
 import time
@@ -20,6 +15,7 @@ from form_checker import CHECKERS
 from hold_timer import HOLD_SETTINGS, HoldTimer
 from rep_counter import REP_SETTINGS, RepCounter
 
+# ---------- Colours and skeleton ----------
 GREEN = (80, 200, 120)
 RED = (60, 60, 230)
 WHITE = (255, 255, 255)
@@ -27,8 +23,8 @@ LINES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"),
          ("hip", "knee"), ("knee", "ankle")]
 
 
+# ---------- Body points from MediaPipe ----------
 def points_from_mediapipe(landmarks, width, height):
-    """Pick the side of the body that faces the camera and fix x for the screen shape."""
     lm = landmarks.landmark
     left = {"shoulder": 11, "elbow": 13, "wrist": 15, "hip": 23, "knee": 25, "ankle": 27}
     right = {"shoulder": 12, "elbow": 14, "wrist": 16, "hip": 24, "knee": 26, "ankle": 28}
@@ -39,8 +35,8 @@ def points_from_mediapipe(landmarks, width, height):
     return {name: (lm[i].x * aspect, lm[i].y) for name, i in side.items()}, aspect
 
 
+# ---------- Coach (joins everything) ----------
 class Coach:
-    """Joins everything together for one training session."""
 
     def __init__(self, model, exercise=None):
         self.detector = ExerciseDetector(model)
@@ -97,6 +93,7 @@ class Coach:
         return lines
 
 
+# ---------- Drawing ----------
 def draw(image, points, coach, scale_x, scale_y):
     color = RED if coach.bad_rep else GREEN
     pixel = {k: (int(x * scale_x), int(y * scale_y)) for k, (x, y) in points.items()}
@@ -109,6 +106,7 @@ def draw(image, points, coach, scale_x, scale_y):
         cv2.putText(image, line, (12, 32 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, WHITE, 2)
 
 
+# ---------- Camera mode ----------
 def run_camera(source, coach):
     import mediapipe as mp
     pose = mp.solutions.pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -130,6 +128,7 @@ def run_camera(source, coach):
     cv2.destroyAllWindows()
 
 
+# ---------- Demo mode ----------
 def run_demo(exercise, coach, seconds=30):
     athlete = FakeAthlete(exercise, seed=7, half_rep_chance=0.3, lean_chance=0.3, drift=1.5)
     for points in athlete.frames(seconds):
@@ -143,6 +142,7 @@ def run_demo(exercise, coach, seconds=30):
     print("\n".join(coach.panel_text()))
 
 
+# ---------- Start ----------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", default=0, help="video file (default: webcam)")

@@ -1,13 +1,8 @@
 # planner.py
-# The program builder: makes a weekly plan for an athlete's sport.
-#
-# Each sport has a score (0-5) for how much it needs each quality.
-# Each exercise has a score (0-3) for how much it trains each quality.
-# An exercise's score for a sport = sum of (sport need x exercise training)
-#   + a bonus for the athlete's weak qualities + a bonus if it is tagged for that sport.
-# Then we remove exercises the athlete can't do (no equipment, injury) and fill the week.
+# The program builder: scores every exercise for the athlete's sport and weak points, removes
+# the ones they can't do (equipment, injuries) and fills a weekly plan.
 
-# name, type, qualities it trains, group, equipment needed, avoid if injured, good for sports
+# ---------- Exercise library ----------
 EXERCISES = [
     ("Back squat", "reps", {"strength": 3, "power": 1}, "squat", "barbell", "knee", []),
     ("Goblet squat", "reps", {"strength": 2, "core": 1}, "squat", "dumbbells", "knee", []),
@@ -39,6 +34,7 @@ EXERCISES = [
     ("Mobility flow", "timer", {"mobility": 3}, "mobility", "none", "", []),
 ]
 
+# ---------- Sport profiles ----------
 SPORTS = {
     "soccer": {"speed": 5, "power": 4, "endurance": 4, "strength": 3, "core": 3, "tendon": 3, "mobility": 2},
     "basketball": {"power": 5, "speed": 4, "tendon": 4, "strength": 3, "core": 3, "endurance": 3, "mobility": 2},
@@ -48,7 +44,8 @@ SPORTS = {
     "general": {"strength": 3, "endurance": 3, "core": 3, "mobility": 3, "power": 2, "speed": 2, "tendon": 2},
 }
 
-# which groups go into each type of training day
+
+# ---------- Training days and season ----------
 DAY_TYPES = {
     "Lower body": ["squat", "hinge", "single_leg", "leg_hold", "core"],
     "Power": ["jump", "jump", "conditioning", "leg_hold", "core"],
@@ -59,10 +56,11 @@ WEEK = {2: ["Lower body", "Upper body"],
         3: ["Lower body", "Upper body", "Power"],
         4: ["Lower body", "Upper body", "Power", "Conditioning"]}
 
-# sets and reps for each part of the season
+
 SEASON = {"off-season": "4 x 8", "pre-season": "4 x 5", "in-season": "2 x 5"}
 
 
+# ---------- Filtering and scoring ----------
 def can_do(exercise, equipment, injuries):
     name, kind, qualities, group, needs, avoid, sports = exercise
     if needs != "none" and needs not in equipment:
@@ -84,8 +82,8 @@ def score(exercise, sport, weak_points=()):
     return total
 
 
+# ---------- Weekly plan ----------
 def make_plan(sport, days=3, equipment=(), injuries=(), weak_points=(), season="off-season"):
-    """Returns a list of days. Each day is (day name, list of (exercise name, dose))."""
     options = [e for e in EXERCISES if can_do(e, equipment, injuries)]
     options.sort(key=lambda e: score(e, sport, weak_points), reverse=True)
 
@@ -110,8 +108,8 @@ def make_plan(sport, days=3, equipment=(), injuries=(), weak_points=(), season="
     return plan
 
 
+# ---------- Alternatives ----------
 def find_alternatives(name, sport, equipment=(), injuries=()):
-    """Other exercises in the same group, best first (used when an athlete wants a swap)."""
     group = None
     for exercise in EXERCISES:
         if exercise[0].lower() == name.lower():
@@ -122,6 +120,7 @@ def find_alternatives(name, sport, equipment=(), injuries=()):
     return [e[0] for e in options]
 
 
+# ---------- Printing ----------
 def print_plan(plan):
     for day_name, exercises in plan:
         print(day_name)
@@ -129,5 +128,6 @@ def print_plan(plan):
             print("   -", name, dose)
 
 
+# ---------- Example ----------
 if __name__ == "__main__":
     print_plan(make_plan("soccer", days=3, equipment=["dumbbells"], injuries=["knee"]))

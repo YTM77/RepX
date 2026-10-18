@@ -1,29 +1,29 @@
 # fake_athlete.py
-# Makes "fake athletes": stick figures that move like a real person doing an exercise.
-# We use them to test the code before we record real people, because we know
-# the right answer (how many reps, which reps were bad, how long the hold was).
-#
-# Every fake athlete has a random body size, position, speed, camera tilt and noise.
+# Fake athletes: moving stick figures with random body size, position, speed, camera tilt and
+# noise. We use them to test the code before recording real people, because we know the right
+# answer (number of reps, bad reps, time in position).
 
 import math
 import random
 
+# ---------- Exercises ----------
 EXERCISES = ["squat", "push_up", "wall_sit", "plank", "jumping_jack", "idle"]
 
 
+# ---------- Helper ----------
 def move(point, length, angle_from_up, direction=1):
-    """Go `length` from `point`, at `angle_from_up` degrees from straight up."""
     a = math.radians(angle_from_up)
     return (point[0] + direction * length * math.sin(a), point[1] - length * math.cos(a))
 
 
+# ---------- Fake athlete ----------
 class FakeAthlete:
     def __init__(self, exercise, seed=0, fps=30, half_rep_chance=0.0, lean_chance=0.0, drift=0.0):
         self.exercise = exercise
         self.fps = fps
         self.half_rep_chance = half_rep_chance
         self.lean_chance = lean_chance
-        self.drift = drift  # wall sit: degrees per second the knee rises after 8 seconds
+        self.drift = drift
         self.random = random.Random(seed)
         r = self.random
 
@@ -37,11 +37,11 @@ class FakeAthlete:
         self.speed = {"squat": r.uniform(2.0, 3.2), "push_up": r.uniform(1.6, 2.6),
                       "jumping_jack": r.uniform(0.9, 1.3)}.get(exercise, 1.0)
 
-        self.reps = []        # the true answer for every squat rep
+        self.reps = []
         self.rep = None
         self.rep_start = 0.0
 
-    # ---------- the true answer for each squat rep ----------
+    # ---------- True answer for each squat rep ----------
     def new_squat_rep(self, t):
         r = self.random
         half = r.random() < self.half_rep_chance
@@ -58,7 +58,7 @@ class FakeAthlete:
         self.rep = rep
         self.rep_start = t
 
-    # ---------- body positions ----------
+    # ---------- Body positions ----------
     def standing_body(self, knee, lean, arm, elbow, shin_tilt=0.4):
         bend = 180 - knee
         ankle = (self.x, self.floor - 0.02)
@@ -74,7 +74,6 @@ class FakeAthlete:
                 "elbow": elbow_point, "wrist": wrist}
 
     def floor_body(self, elbow):
-        """Push-up / plank: a straight line from the feet to the shoulders."""
         body = self.shin + self.thigh + self.torso
         ankle = (self.x - 0.3, self.floor - 0.02)
         a, b = self.upper_arm, self.forearm
@@ -83,7 +82,7 @@ class FakeAthlete:
         rise = math.asin(min(0.99, (ankle[1] - shoulder_y) / body))
         shoulder = (ankle[0] + body * math.cos(rise), shoulder_y)
         wrist = (shoulder[0] + 0.01, self.floor)
-        # elbow: where the upper arm and forearm meet (two circles crossing)
+
         dx, dy = wrist[0] - shoulder[0], wrist[1] - shoulder[1]
         d = max(1e-6, min(math.hypot(dx, dy), a + b - 1e-6))
         along = (a * a - b * b + d * d) / (2 * d)
@@ -97,6 +96,7 @@ class FakeAthlete:
         return {"ankle": ankle, "knee": knee, "hip": hip, "shoulder": shoulder,
                 "elbow": elbow_point, "wrist": wrist}
 
+    # ---------- Movement for each exercise ----------
     def body_at(self, t):
         ex = self.exercise
         if ex == "squat":
@@ -130,8 +130,8 @@ class FakeAthlete:
             return self.floor_body(90)
         raise ValueError("unknown exercise: " + ex)
 
+    # ---------- What the camera sees ----------
     def points_at(self, t):
-        """What the camera would see: the body, tilted a bit, with some noise."""
         body = self.body_at(t)
         c, s = math.cos(math.radians(self.tilt)), math.sin(math.radians(self.tilt))
         points = {}

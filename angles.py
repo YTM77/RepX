@@ -1,13 +1,12 @@
 # angles.py
-# Turns body points into joint angles.
-# A point is just (x, y). For MediaPipe points we multiply x by (width / height)
-# first, otherwise the angles are wrong on wide videos.
+# Turns the body points from the camera into joint angles (knee, hip, elbow, shoulder,
+# trunk lean, body line) and smooths them so the numbers don't jump around.
 
 import math
 
 
+# ---------- Angle between three points ----------
 def calculate_angle(a, b, c):
-    """Angle at point b (in degrees) between the lines b->a and b->c."""
     ba = (a[0] - b[0], a[1] - b[1])
     bc = (c[0] - b[0], c[1] - b[1])
     dot = ba[0] * bc[0] + ba[1] * bc[1]
@@ -19,14 +18,13 @@ def calculate_angle(a, b, c):
 
 
 def angle_from_vertical(top, bottom):
-    """How much the line bottom->top leans away from straight up (0 = standing tall)."""
     dx = top[0] - bottom[0]
-    dy = bottom[1] - top[1]  # y goes down in images
+    dy = bottom[1] - top[1]
     return abs(math.degrees(math.atan2(dx, dy)))
 
 
+# ---------- All joint angles for one frame ----------
 def get_angles(points):
-    """points is a dict like {"shoulder": (x, y), "hip": (x, y), ...} for the side facing the camera."""
     knee = calculate_angle(points["hip"], points["knee"], points["ankle"])
     hip = calculate_angle(points["shoulder"], points["hip"], points["knee"])
     elbow = calculate_angle(points["shoulder"], points["elbow"], points["wrist"])
@@ -40,9 +38,8 @@ def get_angles(points):
 ANGLE_NAMES = ["knee", "hip", "elbow", "shoulder", "trunk_lean", "body_line"]
 
 
+# ---------- Smoothing ----------
 class Smoother:
-    """Averages the last few values of each angle so the numbers don't jump around."""
-
     def __init__(self, size=5):
         self.size = size
         self.history = {}

@@ -1,5 +1,5 @@
 # test_repx.py
-# Run with: pytest
+# Automatic tests for every part. Run with: pytest
 
 from angles import Smoother, calculate_angle, get_angles
 from coach import next_hold, next_weight, readiness, use_tool
@@ -10,12 +10,14 @@ from planner import make_plan
 from rep_counter import RepCounter
 
 
+# ---------- Helper ----------
 def run(exercise, seconds, **options):
     athlete = FakeAthlete(exercise, seed=1, **options)
     smoother = Smoother()
     return athlete, [smoother.smooth(get_angles(p)) for p in athlete.frames(seconds)]
 
 
+# ---------- Angles ----------
 def test_right_angle():
     assert round(calculate_angle((0, 1), (0, 0), (1, 0))) == 90
 
@@ -24,6 +26,7 @@ def test_straight_line():
     assert round(calculate_angle((0, 0), (1, 0), (2, 0))) == 180
 
 
+# ---------- Reps and form ----------
 def test_counts_squats():
     athlete, angles = run("squat", 20)
     counter = RepCounter()
@@ -50,6 +53,7 @@ def test_go_lower_tip():
     assert score == 70
 
 
+# ---------- Hold timer ----------
 def test_wall_sit_timer():
     athlete, angles = run("wall_sit", 15)
     timer = HoldTimer(90, 10)
@@ -66,6 +70,7 @@ def test_timer_stops_when_you_stand_up():
     assert timer.seconds == 0
 
 
+# ---------- Planner and coach ----------
 def test_plan_follows_injuries():
     plan = make_plan("soccer", days=3, injuries=["knee"])
     names = [name for day, exercises in plan for name, dose in exercises]

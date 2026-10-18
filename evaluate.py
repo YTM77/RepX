@@ -1,6 +1,5 @@
 # evaluate.py
-# Tests every part on fake athletes the model has never seen and prints the results.
-# Run: python evaluate.py
+# Tests every part on fake athletes the model never saw and prints the results.
 
 import math
 
@@ -13,15 +12,17 @@ from form_checker import SquatChecker
 from hold_timer import HoldTimer
 from rep_counter import RepCounter
 
+# ---------- 1) Exercise recognition ----------
 print("1) Exercise recognition")
 model = train_model(seeds=range(20))
 X_test, y_test = make_dataset(seeds=range(100, 130))
 accuracy = accuracy_score(y_test, model.predict(X_test))
 print("   test windows:", len(y_test), "  accuracy:", round(accuracy, 3))
 
+# ---------- 2) Rep counting and form tips ----------
 print("2) Rep counting and form tips (40 squat sets)")
 exact_sets = 0
-found = {"depth": [0, 0, 0], "chest": [0, 0, 0]}  # [true positive, false positive, false negative]
+found = {"depth": [0, 0, 0], "chest": [0, 0, 0]}
 for seed in range(200, 240):
     athlete = FakeAthlete("squat", seed=seed, half_rep_chance=0.25, lean_chance=0.25)
     counter, checker, smoother = RepCounter(), SquatChecker(), Smoother()
@@ -32,7 +33,7 @@ for seed in range(200, 240):
         if counter.update(angles["knee"]):
             results.append(checker.finish_rep()[2])
         t += 1 / athlete.fps
-    # a rep is finished once the (noise-free) knee angle is back above 160 degrees
+
     finished = []
     for rep in athlete.reps:
         d = 14 / (174 - rep["lowest_knee"])
@@ -55,6 +56,7 @@ print("   sets counted exactly:", exact_sets, "/ 40")
 for name, (tp, fp, fn) in found.items():
     print("   tip '" + name + "': precision", round(tp / max(tp + fp, 1), 2), " recall", round(tp / max(tp + fn, 1), 2))
 
+# ---------- 3) Hold timer ----------
 print("3) Hold timer (20 wall sits, half of them drift out of position)")
 errors = []
 for seed in range(300, 320):
@@ -64,7 +66,7 @@ for seed in range(300, 320):
     true_seconds, t = 0.0, 0.0
     for points in athlete.frames(25):
         timer.update(smoother.smooth(get_angles(points))["knee"])
-        # true knee angle without noise, to know how long they were really in position
+
         settle = min(t / 1.2, 1.0)
         knee = 172 - 82 * settle + max(t - 8.0, 0.0) * drift
         if abs(knee - 90) <= 10:
