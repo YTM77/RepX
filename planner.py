@@ -2,7 +2,7 @@
 # The program builder: scores every exercise for the athlete's sport and weak points, removes
 # the ones they can't do (equipment, injuries) and fills a weekly plan.
 
-# ---------- Exercise library ----------
+# Exercise library
 EXERCISES = [
     ("Back squat", "reps", {"strength": 3, "power": 1}, "squat", "barbell", "knee", []),
     ("Goblet squat", "reps", {"strength": 2, "core": 1}, "squat", "dumbbells", "knee", []),
@@ -34,7 +34,7 @@ EXERCISES = [
     ("Mobility flow", "timer", {"mobility": 3}, "mobility", "none", "", []),
 ]
 
-# ---------- Sport profiles ----------
+# Sport profiles
 SPORTS = {
     "soccer": {"speed": 5, "power": 4, "endurance": 4, "strength": 3, "core": 3, "tendon": 3, "mobility": 2},
     "basketball": {"power": 5, "speed": 4, "tendon": 4, "strength": 3, "core": 3, "endurance": 3, "mobility": 2},
@@ -45,7 +45,7 @@ SPORTS = {
 }
 
 
-# ---------- Training days and season ----------
+# Training days and season
 DAY_TYPES = {
     "Lower body": ["squat", "hinge", "single_leg", "leg_hold", "core"],
     "Power": ["jump", "jump", "conditioning", "leg_hold", "core"],
@@ -60,7 +60,7 @@ WEEK = {2: ["Lower body", "Upper body"],
 SEASON = {"off-season": "4 x 8", "pre-season": "4 x 5", "in-season": "2 x 5"}
 
 
-# ---------- Filtering and scoring ----------
+# Filtering and scoring
 def can_do(exercise, equipment, injuries):
     name, kind, qualities, group, needs, avoid, sports = exercise
     if needs != "none" and needs not in equipment:
@@ -82,7 +82,7 @@ def score(exercise, sport, weak_points=()):
     return total
 
 
-# ---------- Weekly plan ----------
+# Weekly plan
 def make_plan(sport, days=3, equipment=(), injuries=(), weak_points=(), season="off-season"):
     options = [e for e in EXERCISES if can_do(e, equipment, injuries)]
     options.sort(key=lambda e: score(e, sport, weak_points), reverse=True)
@@ -108,7 +108,7 @@ def make_plan(sport, days=3, equipment=(), injuries=(), weak_points=(), season="
     return plan
 
 
-# ---------- Alternatives ----------
+# Alternatives
 def find_alternatives(name, sport, equipment=(), injuries=()):
     group = None
     for exercise in EXERCISES:
@@ -120,7 +120,7 @@ def find_alternatives(name, sport, equipment=(), injuries=()):
     return [e[0] for e in options]
 
 
-# ---------- Printing ----------
+# Printing
 def print_plan(plan):
     for day_name, exercises in plan:
         print(day_name)
@@ -128,6 +128,6 @@ def print_plan(plan):
             print("   -", name, dose)
 
 
-# ---------- Example ----------
+# Example
 if __name__ == "__main__":
     print_plan(make_plan("soccer", days=3, equipment=["dumbbells"], injuries=["knee"]))

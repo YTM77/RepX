@@ -7,7 +7,7 @@ import statistics
 from planner import EXERCISES, can_do, find_alternatives
 
 
-# ---------- Progression ----------
+# Progression
 def next_weight(weight, reps_done, rep_range, form_score, upper_body=False):
     low, high = rep_range
     if form_score < 70:
@@ -26,7 +26,7 @@ def next_hold(seconds, hold_score):
     return seconds
 
 
-# ---------- Readiness ----------
+# Readiness
 def readiness(hrv_today, hrv_history, rhr_today, rhr_history, sleep_hours, sleep_goal=8):
     hrv_z = (hrv_today - statistics.mean(hrv_history)) / (statistics.stdev(hrv_history) or 1)
     rhr_z = (rhr_today - statistics.mean(rhr_history)) / (statistics.stdev(rhr_history) or 1)
@@ -42,7 +42,7 @@ def readiness(hrv_today, hrv_history, rhr_today, rhr_history, sleep_hours, sleep
     return round(value), advice
 
 
-# ---------- Tools for the chat AI ----------
+# Tools for the chat AI
 TOOLS = [
     {"name": "replace_exercise", "description": "Swap one exercise in today's session for another",
      "parameters": {"old": "string", "new": "string"}},

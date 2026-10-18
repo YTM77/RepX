@@ -5,7 +5,7 @@
 import math
 
 
-# ---------- Angle between three points ----------
+# Angle between three points
 def calculate_angle(a, b, c):
     ba = (a[0] - b[0], a[1] - b[1])
     bc = (c[0] - b[0], c[1] - b[1])
@@ -23,7 +23,7 @@ def angle_from_vertical(top, bottom):
     return abs(math.degrees(math.atan2(dx, dy)))
 
 
-# ---------- All joint angles for one frame ----------
+# All joint angles for one frame
 def get_angles(points):
     knee = calculate_angle(points["hip"], points["knee"], points["ankle"])
     hip = calculate_angle(points["shoulder"], points["hip"], points["knee"])
@@ -38,7 +38,7 @@ def get_angles(points):
 ANGLE_NAMES = ["knee", "hip", "elbow", "shoulder", "trunk_lean", "body_line"]
 
 
-# ---------- Smoothing ----------
+# Smoothing
 class Smoother:
     def __init__(self, size=5):
         self.size = size

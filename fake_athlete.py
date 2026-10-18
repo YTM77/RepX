@@ -6,17 +6,17 @@
 import math
 import random
 
-# ---------- Exercises ----------
+# Exercises
 EXERCISES = ["squat", "push_up", "wall_sit", "plank", "jumping_jack", "idle"]
 
 
-# ---------- Helper ----------
+# Helper
 def move(point, length, angle_from_up, direction=1):
     a = math.radians(angle_from_up)
     return (point[0] + direction * length * math.sin(a), point[1] - length * math.cos(a))
 
 
-# ---------- Fake athlete ----------
+# Fake athlete
 class FakeAthlete:
     def __init__(self, exercise, seed=0, fps=30, half_rep_chance=0.0, lean_chance=0.0, drift=0.0):
         self.exercise = exercise
@@ -41,7 +41,7 @@ class FakeAthlete:
         self.rep = None
         self.rep_start = 0.0
 
-    # ---------- True answer for each squat rep ----------
+    # True answer for each squat rep
     def new_squat_rep(self, t):
         r = self.random
         half = r.random() < self.half_rep_chance
@@ -58,7 +58,7 @@ class FakeAthlete:
         self.rep = rep
         self.rep_start = t
 
-    # ---------- Body positions ----------
+    # Body positions
     def standing_body(self, knee, lean, arm, elbow, shin_tilt=0.4):
         bend = 180 - knee
         ankle = (self.x, self.floor - 0.02)
@@ -96,7 +96,7 @@ class FakeAthlete:
         return {"ankle": ankle, "knee": knee, "hip": hip, "shoulder": shoulder,
                 "elbow": elbow_point, "wrist": wrist}
 
-    # ---------- Movement for each exercise ----------
+    # Movement for each exercise
     def body_at(self, t):
         ex = self.exercise
         if ex == "squat":
@@ -130,7 +130,7 @@ class FakeAthlete:
             return self.floor_body(90)
         raise ValueError("unknown exercise: " + ex)
 
-    # ---------- What the camera sees ----------
+    # What the camera sees
     def points_at(self, t):
         body = self.body_at(t)
         c, s = math.cos(math.radians(self.tilt)), math.sin(math.radians(self.tilt))

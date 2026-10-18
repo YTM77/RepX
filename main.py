@@ -15,7 +15,7 @@ from form_checker import CHECKERS
 from hold_timer import HOLD_SETTINGS, HoldTimer
 from rep_counter import REP_SETTINGS, RepCounter
 
-# ---------- Colours and skeleton ----------
+# Colours and skeleton
 GREEN = (80, 200, 120)
 RED = (60, 60, 230)
 WHITE = (255, 255, 255)
@@ -23,7 +23,7 @@ LINES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"),
          ("hip", "knee"), ("knee", "ankle")]
 
 
-# ---------- Body points from MediaPipe ----------
+# Body points from MediaPipe
 def points_from_mediapipe(landmarks, width, height):
     lm = landmarks.landmark
     left = {"shoulder": 11, "elbow": 13, "wrist": 15, "hip": 23, "knee": 25, "ankle": 27}
@@ -35,7 +35,7 @@ def points_from_mediapipe(landmarks, width, height):
     return {name: (lm[i].x * aspect, lm[i].y) for name, i in side.items()}, aspect
 
 
-# ---------- Coach (joins everything) ----------
+# Coach (joins everything)
 class Coach:
 
     def __init__(self, model, exercise=None):
@@ -93,7 +93,7 @@ class Coach:
         return lines
 
 
-# ---------- Drawing ----------
+# Drawing
 def draw(image, points, coach, scale_x, scale_y):
     color = RED if coach.bad_rep else GREEN
     pixel = {k: (int(x * scale_x), int(y * scale_y)) for k, (x, y) in points.items()}
@@ -106,7 +106,7 @@ def draw(image, points, coach, scale_x, scale_y):
         cv2.putText(image, line, (12, 32 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, WHITE, 2)
 
 
-# ---------- Camera mode ----------
+# Camera mode
 def run_camera(source, coach):
     import mediapipe as mp
     pose = mp.solutions.pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -128,7 +128,7 @@ def run_camera(source, coach):
     cv2.destroyAllWindows()
 
 
-# ---------- Demo mode ----------
+# Demo mode
 def run_demo(exercise, coach, seconds=30):
     athlete = FakeAthlete(exercise, seed=7, half_rep_chance=0.3, lean_chance=0.3, drift=1.5)
     for points in athlete.frames(seconds):
@@ -142,7 +142,7 @@ def run_demo(exercise, coach, seconds=30):
     print("\n".join(coach.panel_text()))
 
 
-# ---------- Start ----------
+# Start
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", default=0, help="video file (default: webcam)")

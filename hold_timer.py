@@ -5,7 +5,7 @@
 import numpy as np
 
 
-# ---------- Hold timer ----------
+# Hold timer
 class HoldTimer:
     def __init__(self, target, tolerance, fps=30):
         self.target = target
@@ -36,7 +36,7 @@ class HoldTimer:
             return True
         return False
 
-    # ---------- Hold score ----------
+    # Hold score
     def score(self):
         if len(self.held_angles) < 2:
             return 0
@@ -53,7 +53,7 @@ class HoldTimer:
         return float(np.polyfit(times, errors, 1)[0])
 
 
-# ---------- Settings for each hold ----------
+# Settings for each hold
 HOLD_SETTINGS = {
     "wall_sit": {"angle": "knee", "target": 90, "tolerance": 10},
     "plank": {"angle": "body_line", "target": 78, "tolerance": 12},

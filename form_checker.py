@@ -2,7 +2,7 @@
 # Checks the form of every rep with simple rules, gives a form score (100 minus penalties)
 # and one tip like "Go lower".
 
-# ---------- Squat form ----------
+# Squat form
 class SquatChecker:
     def __init__(self):
         self.reset()
@@ -35,7 +35,7 @@ class SquatChecker:
         return score, tip, problems
 
 
-# ---------- Push-up form ----------
+# Push-up form
 class PushUpChecker:
     def __init__(self):
         self.reset()
@@ -68,5 +68,5 @@ class PushUpChecker:
         return score, tip, problems
 
 
-# ---------- Checker for each exercise ----------
+# Checker for each exercise
 CHECKERS = {"squat": SquatChecker, "push_up": PushUpChecker}

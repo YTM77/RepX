@@ -2,7 +2,7 @@
 # Counts reps from one joint angle. Going down past the depth line and back up is one rep;
 # coming back up before the depth line is a half rep (not counted).
 
-# ---------- Rep counter ----------
+# Rep counter
 class RepCounter:
     def __init__(self, top=160, depth=100, start=150):
         self.top = top
@@ -30,7 +30,7 @@ class RepCounter:
         return None
 
 
-# ---------- Settings for each exercise ----------
+# Settings for each exercise
 REP_SETTINGS = {
     "squat": {"angle": "knee", "top": 160, "depth": 100, "start": 150},
     "push_up": {"angle": "elbow", "top": 155, "depth": 100, "start": 145},

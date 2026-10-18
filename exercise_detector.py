@@ -8,12 +8,12 @@ from sklearn.ensemble import RandomForestClassifier
 from angles import ANGLE_NAMES, Smoother, get_angles
 from fake_athlete import EXERCISES, FakeAthlete
 
-# ---------- Settings ----------
+# Settings
 WINDOW = 48
 STEP = 8
 
 
-# ---------- Features ----------
+# Features
 def window_features(window):
     row = []
     for name in ANGLE_NAMES:
@@ -23,7 +23,7 @@ def window_features(window):
     return row
 
 
-# ---------- Training data and model ----------
+# Training data and model
 def angles_from_athlete(athlete, seconds):
     smoother = Smoother()
     return [smoother.smooth(get_angles(points)) for points in athlete.frames(seconds)]
@@ -47,7 +47,7 @@ def train_model(seeds=range(20)):
     return model
 
 
-# ---------- Live detector ----------
+# Live detector
 class ExerciseDetector:
     def __init__(self, model):
         self.model = model
