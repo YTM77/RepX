@@ -8,6 +8,12 @@ from form_checker import SquatChecker
 from hold_timer import HoldTimer
 from planner import make_plan
 from rep_counter import RepCounter
+from chatbot import reply
+from database import add_athlete, connect, get_athlete, get_sets, save_set, start_workout
+from jump_tracker import JumpTracker, fake_jump_ankle
+from onboarding import EXAMPLE_ATHLETE, check_profile, safety_check
+from progress import summary
+from wearables import adjust_session, fake_watch_days, sync_watch, todays_readiness
 
 
 # Helper
@@ -97,3 +103,65 @@ def test_coach_cannot_add_unknown_exercise():
     ok, message, session = use_tool("replace_exercise", {"old": "Box squat", "new": "Step-up"},
                                     ["Box squat"], athlete)
     assert ok and session == ["Step-up"]
+
+
+# Database
+def test_save_and_load_athlete():
+    db = connect(":memory:")
+    athlete_id = add_athlete(db, EXAMPLE_ATHLETE)
+    assert get_athlete(db, athlete_id)["sport"] == "soccer"
+    workout_id = start_workout(db, athlete_id, "Lower body")
+    save_set(db, workout_id, "Goblet squat", reps=8, form_score=90)
+    assert get_sets(db, athlete_id)[0]["reps"] == 8
+
+
+# Onboarding
+def test_profile_checks():
+    assert check_profile(EXAMPLE_ATHLETE) == []
+    bad = dict(EXAMPLE_ATHLETE, sport="chess", days_per_week=7)
+    assert len(check_profile(bad)) == 2
+
+
+def test_safety_check():
+    assert safety_check([False, False, False])[0]
+    assert not safety_check([False, True, False])[0]
+
+
+# Jumps
+def test_jump_height():
+    tracker = JumpTracker()
+    for y in fake_jump_ankle(40):
+        tracker.update(y)
+    assert abs(tracker.best() - 40) < 3
+
+
+# Smartwatch
+def test_bad_night_means_lighter_day():
+    db = connect(":memory:")
+    athlete_id = add_athlete(db, EXAMPLE_ATHLETE)
+    sync_watch(db, athlete_id, fake_watch_days(bad_last_night=True))
+    score, advice = todays_readiness(db, athlete_id)
+    assert score < 40
+    assert adjust_session([("Goblet squat", "4 x 5")], score) == [("Goblet squat", "3 x 5")]
+
+
+# Chat coach
+def test_chat_swaps_exercise():
+    answer, session = reply("Can I swap Goblet squat for Box squat?", ["Goblet squat"], EXAMPLE_ATHLETE)
+    assert session == ["Box squat"]
+
+
+def test_chat_never_trains_through_pain():
+    answer, session = reply("my shoulder hurts", ["Push-up"], EXAMPLE_ATHLETE)
+    assert "doctor" in answer
+
+
+# Progress
+def test_progress_summary():
+    db = connect(":memory:")
+    athlete_id = add_athlete(db, EXAMPLE_ATHLETE)
+    workout_id = start_workout(db, athlete_id, "Lower body")
+    save_set(db, workout_id, "Goblet squat", reps=8, form_score=60)
+    save_set(db, workout_id, "Plank", hold_seconds=30, form_score=90)
+    info = summary(db, athlete_id)
+    assert info["reps"] == 8 and info["average_form"] == 75 and info["needs_work"] == "Goblet squat"
