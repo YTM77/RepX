@@ -47,6 +47,9 @@ class Coach:
         self.message = "Get into position"
         self.bad_rep = False
         self.frames = 0
+        self.counter = None
+        self.timer = None
+        self.checker = None
 
     def start(self, exercise):
         self.exercise = exercise
