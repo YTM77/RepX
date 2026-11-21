@@ -1,6 +1,9 @@
 # exercise_detector.py
-# Recognises the exercise from 1.6 seconds of joint angles with a Random Forest.
+# Names the exercise with a classifier. It looks at 1.6 seconds of joint angles (48 frames),
+# turns them into 36 numbers (features) and the trained model gives the exercise name.
 # An exercise is only locked after 3 confident guesses in a row agree.
+
+import pickle
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -11,9 +14,14 @@ from fake_athlete import EXERCISES, FakeAthlete
 # Settings
 WINDOW = 48
 STEP = 8
+MODEL_FILE = "exercise_model.pkl"
 
 
 # Features
+FEATURE_NAMES = [name + "_" + stat for name in ANGLE_NAMES
+                 for stat in ["mean", "std", "min", "max", "range", "speed"]]
+
+
 def window_features(window):
     row = []
     for name in ANGLE_NAMES:
@@ -23,13 +31,19 @@ def window_features(window):
     return row
 
 
-# Training data and model
+# Real model (trained by train_model.py on the Kaggle videos)
+def load_model(file=MODEL_FILE):
+    with open(file, "rb") as f:
+        return pickle.load(f)
+
+
+# Fake model (for the no-camera demo and the tests)
 def angles_from_athlete(athlete, seconds):
     smoother = Smoother()
     return [smoother.smooth(get_angles(points)) for points in athlete.frames(seconds)]
 
 
-def make_dataset(seeds, seconds=12):
+def make_fake_dataset(seeds, seconds=12):
     X, y = [], []
     for exercise in EXERCISES:
         for seed in seeds:
@@ -40,8 +54,8 @@ def make_dataset(seeds, seconds=12):
     return np.array(X), np.array(y)
 
 
-def train_model(seeds=range(20)):
-    X, y = make_dataset(seeds)
+def train_fake_model(seeds=range(20)):
+    X, y = make_fake_dataset(seeds)
     model = RandomForestClassifier(n_estimators=100, random_state=0)
     model.fit(X, y)
     return model
@@ -55,6 +69,7 @@ class ExerciseDetector:
         self.frame_count = 0
         self.last_guesses = []
         self.exercise = None
+        self.confidence = 0.0
 
     def update(self, angles):
         self.window.append(angles)
@@ -66,7 +81,8 @@ class ExerciseDetector:
 
         probabilities = self.model.predict_proba([window_features(self.window)])[0]
         best = probabilities.argmax()
-        guess = self.model.classes_[best] if probabilities[best] >= 0.7 else None
+        self.confidence = probabilities[best]
+        guess = self.model.classes_[best] if self.confidence >= 0.7 else None
 
         self.last_guesses.append(guess)
         self.last_guesses = self.last_guesses[-3:]

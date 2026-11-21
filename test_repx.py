@@ -4,7 +4,7 @@
 from angles import Smoother, calculate_angle, get_angles
 from coach import next_hold, next_weight, readiness, use_tool
 from fake_athlete import FakeAthlete
-from form_checker import SquatChecker
+from form_checker import FormChecker
 from hold_timer import HoldTimer
 from planner import make_plan
 from rep_counter import RepCounter
@@ -52,10 +52,24 @@ def test_half_reps_are_not_counted():
 
 
 def test_go_lower_tip():
-    checker = SquatChecker()
+    checker = FormChecker("squat")
     checker.update({"knee": 120, "trunk_lean": 20})
     score, tip, problems = checker.finish_rep()
     assert tip == "Go lower"
+    assert score == 70
+
+
+def test_good_squat():
+    checker = FormChecker("squat")
+    checker.update({"knee": 90, "trunk_lean": 20})
+    assert checker.finish_rep() == (100, "Good rep!", [])
+
+
+def test_push_up_body_line_rule():
+    checker = FormChecker("push_up")
+    checker.update({"elbow": 90, "hip": 140})
+    score, tip, problems = checker.finish_rep()
+    assert tip == "Keep your body straight"
     assert score == 70
 
 

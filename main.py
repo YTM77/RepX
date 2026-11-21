@@ -1,6 +1,7 @@
 # main.py
-# RepX live coach: webcam or video -> MediaPipe body points -> exercise detection -> reps,
-# holds and form tips on screen. Use --demo to run with a fake athlete and no camera.
+# RepX live demo: webcam or video -> MediaPipe body points -> joint angles -> the classifier
+# names the exercise -> reps, holds and form tips on screen.
+# Run make_dataset.py and train_model.py once first. Use --demo for a fake athlete, no camera.
 
 import argparse
 import time
@@ -9,9 +10,9 @@ import cv2
 import numpy as np
 
 from angles import Smoother, get_angles
-from exercise_detector import ExerciseDetector, train_model
+from exercise_detector import ExerciseDetector, load_model, train_fake_model
 from fake_athlete import FakeAthlete
-from form_checker import CHECKERS
+from form_checker import FormChecker
 from hold_timer import HOLD_SETTINGS, HoldTimer
 from rep_counter import REP_SETTINGS, RepCounter
 
@@ -45,16 +46,17 @@ class Coach:
         self.exercise = None
         self.message = "Get into position"
         self.bad_rep = False
+        self.frames = 0
 
     def start(self, exercise):
         self.exercise = exercise
         self.counter = None
         self.timer = None
-        self.checker = None
+        self.checker = FormChecker(exercise)
+        self.hold_tip = "Good rep!"
         if exercise in REP_SETTINGS:
             s = REP_SETTINGS[exercise]
             self.counter = RepCounter(s["top"], s["depth"], s["start"])
-            self.checker = CHECKERS[exercise]()
         if exercise in HOLD_SETTINGS:
             s = HOLD_SETTINGS[exercise]
             self.timer = HoldTimer(s["target"], s["tolerance"])
@@ -68,8 +70,8 @@ class Coach:
         if self.exercise is None:
             return angles
 
+        self.checker.update(angles)
         if self.counter:
-            self.checker.update(angles)
             result = self.counter.update(angles[REP_SETTINGS[self.exercise]["angle"]])
             if result:
                 score, tip, problems = self.checker.finish_rep()
@@ -79,8 +81,16 @@ class Coach:
                 self.message = tip + " (form " + str(score) + ")"
         if self.timer:
             running = self.timer.update(angles[HOLD_SETTINGS[self.exercise]["angle"]])
-            self.bad_rep = not running
-            self.message = "Holding - keep still" if running else "Get back into position"
+            self.frames += 1
+            if self.frames % 30 == 0:
+                score, self.hold_tip, problems = self.checker.finish_rep()
+            self.bad_rep = not running or self.hold_tip != "Good rep!"
+            if not running:
+                self.message = "Get back into position"
+            elif self.hold_tip != "Good rep!":
+                self.message = self.hold_tip
+            else:
+                self.message = "Holding - keep still"
         return angles
 
     def panel_text(self):
@@ -146,14 +156,17 @@ def run_demo(exercise, coach, seconds=30):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", default=0, help="video file (default: webcam)")
-    parser.add_argument("--exercise", default=None, help="squat, push_up, wall_sit or plank")
+    parser.add_argument("--exercise", default=None, help="skip the classifier, e.g. --exercise squat")
     parser.add_argument("--demo", default=None, help="run with a fake athlete, e.g. --demo squat")
     args = parser.parse_args()
 
-    print("Training the exercise detector...")
-    start = time.time()
-    model = train_model()
-    print("Done in", round(time.time() - start, 1), "seconds")
+    if args.demo:
+        print("Training the exercise detector on fake athletes...")
+        start = time.time()
+        model = train_fake_model()
+        print("Done in", round(time.time() - start, 1), "seconds")
+    else:
+        model = load_model()
 
     coach = Coach(model, args.exercise)
     if args.demo:

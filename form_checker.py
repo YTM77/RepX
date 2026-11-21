@@ -1,72 +1,65 @@
 # form_checker.py
-# Checks the form of every rep with simple rules, gives a form score (100 minus penalties)
-# and one tip like "Go lower".
+# Checks the form of every rep with fixed rules. Each rule looks at one joint angle:
+# "reach below" means the angle must go under the limit at least once (depth),
+# "stay below" means it must never go over the limit, "stay above" means never under it.
+# Every broken rule takes 30 points off the form score and the first one becomes the tip.
 
-# Squat form
-class SquatChecker:
-    def __init__(self):
+# Form rules
+RULES = {
+    "squat": [
+        ("knee", "reach below", 100, "Go lower"),
+        ("trunk_lean", "stay below", 45, "Keep your chest up"),
+    ],
+    "push_up": [
+        ("elbow", "reach below", 100, "Lower your chest more"),
+        ("hip", "stay above", 155, "Keep your body straight"),
+    ],
+    "pull_up": [
+        ("elbow", "reach below", 90, "Pull higher"),
+        ("trunk_lean", "stay below", 30, "Don't swing"),
+    ],
+    "shoulder_press": [
+        ("elbow", "reach below", 100, "Bring the weights down to your shoulders"),
+        ("trunk_lean", "stay below", 20, "Don't lean back"),
+    ],
+    "plank": [
+        ("hip", "stay above", 160, "Keep your hips in line"),
+    ],
+    "wall_sit": [
+        ("knee", "stay below", 100, "Sit lower"),
+        ("knee", "stay above", 80, "Come up a little"),
+    ],
+}
+
+
+# Form checker
+class FormChecker:
+    def __init__(self, exercise):
+        self.rules = RULES.get(exercise, [])
         self.reset()
 
     def reset(self):
-        self.lowest_knee = 180
-        self.most_lean = 0
+        self.lowest = {}
+        self.highest = {}
 
     def update(self, angles):
-        self.lowest_knee = min(self.lowest_knee, angles["knee"])
-        self.most_lean = max(self.most_lean, angles["trunk_lean"])
+        for name, value in angles.items():
+            self.lowest[name] = min(self.lowest.get(name, value), value)
+            self.highest[name] = max(self.highest.get(name, value), value)
 
     def finish_rep(self):
-        problems = []
-        score = 100
-        if self.lowest_knee > 100:
-            problems.append("depth")
-            score -= 30
-        if self.most_lean > 45:
-            problems.append("chest")
-            score -= 25
+        broken = []
+        for angle, kind, limit, tip in self.rules:
+            if angle not in self.lowest:
+                continue
+            if kind == "reach below" and self.lowest[angle] > limit:
+                broken.append(tip)
+            if kind == "stay below" and self.highest[angle] > limit:
+                broken.append(tip)
+            if kind == "stay above" and self.lowest[angle] < limit:
+                broken.append(tip)
 
-        tip = "Good rep!"
-        if "depth" in problems:
-            tip = "Go lower"
-        elif "chest" in problems:
-            tip = "Keep your chest up"
-
+        score = max(100 - 30 * len(broken), 0)
+        tip = broken[0] if broken else "Good rep!"
         self.reset()
-        return score, tip, problems
-
-
-# Push-up form
-class PushUpChecker:
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.lowest_elbow = 180
-        self.worst_sag = 0
-
-    def update(self, angles):
-        self.lowest_elbow = min(self.lowest_elbow, angles["elbow"])
-        self.worst_sag = max(self.worst_sag, 180 - angles["hip"])
-
-    def finish_rep(self):
-        problems = []
-        score = 100
-        if self.lowest_elbow > 100:
-            problems.append("depth")
-            score -= 30
-        if self.worst_sag > 25:
-            problems.append("hips")
-            score -= 25
-
-        tip = "Good rep!"
-        if "depth" in problems:
-            tip = "Lower your chest more"
-        elif "hips" in problems:
-            tip = "Keep your body straight"
-
-        self.reset()
-        return score, tip, problems
-
-
-# Checker for each exercise
-CHECKERS = {"squat": SquatChecker, "push_up": PushUpChecker}
+        return score, tip, broken

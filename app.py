@@ -7,7 +7,7 @@ import sys
 
 from chatbot import reply
 from database import add_athlete, connect, get_athlete, save_message
-from exercise_detector import train_model
+from exercise_detector import train_fake_model
 from onboarding import EXAMPLE_ATHLETE, check_profile, run_onboarding
 from planner import make_plan, print_plan
 from progress import print_summary, summary
@@ -55,7 +55,7 @@ def auto_demo(db_file="repx_demo.db"):
 
     line("4) Today's workout")
     print("Training the exercise detector...")
-    model = train_model()
+    model = train_fake_model()
     run_workout(db, athlete_id, model, day_type, session)
 
     line("5) Chat coach")
@@ -109,7 +109,7 @@ def menu():
         elif choice == "4":
             if model is None:
                 print("Training the exercise detector...")
-                model = train_model()
+                model = train_fake_model()
             run_workout(db, athlete["id"], model, plan[0][0], session)
         elif choice == "5":
             names = session_names(session)

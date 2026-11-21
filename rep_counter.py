@@ -34,4 +34,6 @@ class RepCounter:
 REP_SETTINGS = {
     "squat": {"angle": "knee", "top": 160, "depth": 100, "start": 150},
     "push_up": {"angle": "elbow", "top": 155, "depth": 100, "start": 145},
+    "pull_up": {"angle": "elbow", "top": 150, "depth": 90, "start": 140},
+    "shoulder_press": {"angle": "elbow", "top": 155, "depth": 100, "start": 145},
 }

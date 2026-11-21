@@ -6,26 +6,26 @@ import math
 from sklearn.metrics import accuracy_score
 
 from angles import Smoother, get_angles
-from exercise_detector import make_dataset, train_model
+from exercise_detector import make_fake_dataset, train_fake_model
 from fake_athlete import FakeAthlete
-from form_checker import SquatChecker
+from form_checker import FormChecker
 from hold_timer import HoldTimer
 from rep_counter import RepCounter
 
 # 1) Exercise recognition
 print("1) Exercise recognition")
-model = train_model(seeds=range(20))
-X_test, y_test = make_dataset(seeds=range(100, 130))
+model = train_fake_model(seeds=range(20))
+X_test, y_test = make_fake_dataset(seeds=range(100, 130))
 accuracy = accuracy_score(y_test, model.predict(X_test))
 print("   test windows:", len(y_test), "  accuracy:", round(accuracy, 3))
 
 # 2) Rep counting and form tips
 print("2) Rep counting and form tips (40 squat sets)")
 exact_sets = 0
-found = {"depth": [0, 0, 0], "chest": [0, 0, 0]}
+found = {"Go lower": [0, 0, 0], "Keep your chest up": [0, 0, 0]}
 for seed in range(200, 240):
     athlete = FakeAthlete("squat", seed=seed, half_rep_chance=0.25, lean_chance=0.25)
-    counter, checker, smoother = RepCounter(), SquatChecker(), Smoother()
+    counter, checker, smoother = RepCounter(), FormChecker("squat"), Smoother()
     results, t = [], 0.0
     for points in athlete.frames(30):
         angles = smoother.smooth(get_angles(points))
@@ -44,7 +44,7 @@ for seed in range(200, 240):
     if counter.reps == true_full and counter.half_reps == len(finished) - true_full:
         exact_sets += 1
     for rep, problems in zip(finished, results):
-        for name, truth in (("depth", not rep["full"]), ("chest", rep["bad_lean"])):
+        for name, truth in (("Go lower", not rep["full"]), ("Keep your chest up", rep["bad_lean"])):
             said = name in problems
             if said and truth:
                 found[name][0] += 1
