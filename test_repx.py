@@ -179,3 +179,13 @@ def test_progress_summary():
     save_set(db, workout_id, "Plank", hold_seconds=30, form_score=90)
     info = summary(db, athlete_id)
     assert info["reps"] == 8 and info["average_form"] == 75 and info["needs_work"] == "Goblet squat"
+
+
+def test_standing_push_up_not_counted():
+    from main import Coach
+    coach = Coach(model=None, exercise="push_up")
+    standing = FakeAthlete("squat", seed=1)
+    for points in standing.frames(5):
+        coach.update(points)
+    assert coach.counter.reps == 0
+    assert coach.message == "Get down into position"

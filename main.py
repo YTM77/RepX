@@ -72,6 +72,10 @@ class Coach:
             self.start(exercise)
         if self.exercise is None:
             return angles
+        if self.exercise in ("push_up", "plank") and angles["body_line"] < 50:
+            self.message = "Get down into position"
+            self.bad_rep = True
+            return angles
 
         self.checker.update(angles)
         if self.counter:
